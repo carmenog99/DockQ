@@ -822,7 +822,7 @@ def main():
 
 		else:
 			#print(("DockQ-capri_peptide %.3f Fnat %.3f iRMS %.3f IL-RMSD %.3f LRMS %.3f Fnonnat %.3f %s %s %s" % (DockQ,fnat,irms,il_rmsd,Lrms,fnonnat,model_in,native_in,best_info)))
-			print("%.3f" % il_rmsd)
+			print(("DockQ-capri_peptide %.3f Fnat %.3f iRMS %.3f IL-RMSD %.3f LRMS %.3f Fnonnat %.3f %s %s %s" % (DockQ,fnat,irms,il_rmsd,Lrms,fnonnat,model_in,native_in,best_info)))
 	else:
 		if capri_peptide:
 			print('****************************************************************')
