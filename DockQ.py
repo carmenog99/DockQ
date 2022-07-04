@@ -114,8 +114,8 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 			for a in atom_for_sup:
 				atom_key=key + '.' + a
 				if a in sample_res:
-					if atom_key in atoms_def_sample:
-						print(atom_key + ' already added (MODEL)!!!')
+					#if atom_key in atoms_def_sample:
+						#print(atom_key + ' already added (MODEL)!!!')
 					atoms_def_sample.append(atom_key)
 
 	#then read in native also present in sample
@@ -131,8 +131,8 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 			for a in atom_for_sup:
 				atom_key=key + '.' + a
 				if a in ref_res and atom_key in atoms_def_sample:
-					if atom_key in atoms_def_in_both:
-						print(atom_key + ' already added (Native)!!!') 
+					#if atom_key in atoms_def_in_both:
+						#print(atom_key + ' already added (Native)!!!') 
 					atoms_def_in_both.append(atom_key)
 
 
@@ -161,14 +161,14 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 					if a in sample_res and atom_key in atoms_def_in_both:
 						sample_receptor_atoms.append(sample_res[a])
 				common_receptor_interface.append(key)
-			"""
+			
 			if key in ligand_interface: 
 				for a in atom_for_sup:
 					atom_key=key + '.' + a
 					if a in sample_res and atom_key in atoms_def_in_both:
 						sample_ligand_atoms.append(sample_res[a])
 				common_ligand_interface.append(key)
-			"""
+			
 				
 	#print inter_pairs
 	
@@ -222,7 +222,7 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 					#print atom_key
 					if a in ref_res and atom_key in atoms_def_in_both:
 						ref_receptor_atoms.append(ref_res[a])
-			"""
+			
 			if key in common_ligand_interface:
 			  # Check if residue number ( .get_id() ) is in the list
 			  # Append CA atom to list
@@ -232,8 +232,28 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 					#print atom_key
 					if a in ref_res and atom_key in atoms_def_in_both:
 						ref_ligand_atoms.append(ref_res[a])
-			"""
-	#print(ref_atoms)		
+			
+	"""		
+	#print(ref_atoms)
+	res = []
+	for a in ref_ligand_atoms:
+		full_id = a.get_full_id()
+		num_res = full_id[3][1]
+		id = f"{a.get_parent().get_resname()}.{num_res}"
+		res.append((num_res, id))
+	res = sorted(list(set(res)), key=lambda item: item[0], reverse=False)
+	print(res)
+	
+	res_2= []
+	for a in ref_receptor_atoms:
+		full_id = a.get_full_id()
+		num_res = full_id[3][1]
+		id = f"{a.get_parent().get_resname()}.{num_res}"
+		res_2.append((num_res, id))
+	res_2 = sorted(list(set(res_2)), key=lambda item: item[0], reverse=False)
+	print(res_2)
+	"""
+
 
 	#get the ones that are present in native		
 	chain_sample={}
@@ -252,7 +272,7 @@ def find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_in
 					if a in sample_res and atom_key in atoms_def_in_both:
 						chain_sample[chain].append(sample_res[a])
 						
-	return (chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms)
+	return (chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms, ref_ligand_atoms, sample_ligand_atoms)
 
 def capri_class_DockQ(DockQ,capri_peptide=False):
 
@@ -324,8 +344,8 @@ def calc_DockQ(model,native,use_CA_only=False,capri_peptide=False):
 			receptor_interface.append(i)
 			
 	#print("interface", interface)
-	#print(ligand_interface)
-	#print(receptor_interface)
+	#print("ligand", ligand_interface)
+	#print("receptor", receptor_interface)
 	
 	#print(ligand_interface)		
 
@@ -350,7 +370,7 @@ def calc_DockQ(model,native,use_CA_only=False,capri_peptide=False):
 	# Make a list of the atoms (in the structures) you wish to align.
 	# In this case we use CA atoms whose index is in the specified range
 	
-	(chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms)=find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_interface, atom_for_sup)
+	(chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms,ref_ligand_atoms, sample_ligand_atoms)=find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_interface, atom_for_sup)
 		
 	assert len(ref_atoms)!=0, "length of native is zero"
 	assert len(sample_atoms)!=0, "length of model is zero"
@@ -459,13 +479,17 @@ def calc_DockQ(model,native,use_CA_only=False,capri_peptide=False):
 	super_imposer_il.set_atoms(ref_receptor_atoms, sample_receptor_atoms)
 	super_imposer_il.apply(sample_model.get_atoms())
 	
-	(chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms)=find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_interface, atom_for_sup)
+	(chain_ref, chain_res, chain_sample, ref_atoms, sample_atoms, ref_receptor_atoms, sample_receptor_atoms, ref_ligand_atoms, sample_ligand_atoms)=find_atoms(sample_model, ref_model, interface, ligand_interface, receptor_interface, atom_for_sup)
 	
+	coord_ref_int=np.array([atom.coord for atom in ref_ligand_atoms])
+	#print(coord_ref_int)
+	coord_mod_int=np.array([atom.coord for atom in sample_ligand_atoms])
+	#print(coord_mod_int)
 	
-	coord3=np.array([atom.coord for atom in chain_ref[ligand_chain]])
-	coord4=np.array([atom.coord for atom in chain_sample[ligand_chain]])
+	#coord3=np.array([atom.coord for atom in chain_ref[ligand_chain]])
+	#coord4=np.array([atom.coord for atom in chain_sample[ligand_chain]])
 	
-	il_rmsd=calcRMSD(coord3, coord4)
+	il_rmsd=calcRMSD(coord_ref_int, coord_mod_int)
 	
 	#super_imposer.set_atoms(chain_ref[ligand_chain], chain_sample[ligand_chain])
 	#super_imposer.apply(sample_model.get_atoms())
@@ -797,8 +821,8 @@ def main():
 			print(("DockQ-capri_peptide %.3f Fnat %.3f iRMS %.3f IL-RMSD %.3f LRMS %.3f Fnonnat %.3f %s %s %s" % (DockQ,fnat,irms,il_rmsd,Lrms,fnonnat,model_in,native_in,best_info)))
 
 		else:
-			print(("DockQ-capri_peptide %.3f Fnat %.3f iRMS %.3f IL-RMSD %.3f LRMS %.3f Fnonnat %.3f %s %s %s" % (DockQ,fnat,irms,il_rmsd,Lrms,fnonnat,model_in,native_in,best_info)))
-
+			#print(("DockQ-capri_peptide %.3f Fnat %.3f iRMS %.3f IL-RMSD %.3f LRMS %.3f Fnonnat %.3f %s %s %s" % (DockQ,fnat,irms,il_rmsd,Lrms,fnonnat,model_in,native_in,best_info)))
+			print("%.3f" % il_rmsd)
 	else:
 		if capri_peptide:
 			print('****************************************************************')
